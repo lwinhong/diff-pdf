@@ -20,3 +20,7 @@ mingw
 *.o
 # the final binary
 diff-pdf
+/diff-pdf-win-*.zip
+/diff-pdf.exe
+/.vs
+/diff-pdf-win-*
