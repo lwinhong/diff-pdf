@@ -426,6 +426,8 @@ bool doc_compare(PopplerDocument* doc1, PopplerDocument* doc2,
 			printf("pages count differs: %d vs %d\n", pages1, pages2);
 	}
 
+	int handledCount = 0;
+	int pagesCount = pages1 > pages2 ? pages1 : pages2;
 	for (int page = 0; page < pages_total; page++)
 	{
 		//判断pages是否为空，而且是否包括page，如果不包括page，则跳过该页
@@ -435,7 +437,9 @@ bool doc_compare(PopplerDocument* doc1, PopplerDocument* doc2,
 			if (it == pages->end())
 				continue;
 		}
-
+		//printf("progress:page-%d,total-%d,\n", page + 1, pages_total);
+		std::cout << "Progress: " << page + 1 << "," << pages_total << std::endl;
+		std::cout.flush();  // 强制刷新输出缓冲区
 		if (progress)
 		{
 			progress->Update
@@ -889,29 +893,35 @@ IMPLEMENT_APP_NO_MAIN(DiffPdfApp);
 
 /**
  * 将字符串转换为整数数组
- * 
+ *
  * 该函数接收一个字符串作为输入，该字符串应包含以逗号分隔的整数
  * 它将这些整数提取出来，放入一个整数数组中，并返回该数组
- * 
+ *
  * @param str 包含逗号分隔整数的字符串
  * @return 一个包含从字符串中提取的整数的向量
  */
 std::vector<int> stringToArray(const std::string& str) {
-    // 初始化一个空的整数向量，用于存储从字符串中提取的整数
-    std::vector<int> result;
-    // 创建一个字符串流对象，以便从输入字符串中读取数据
-    std::stringstream ss(str);
-    // 声明一个临时字符串，用于存储从字符串流中读取的每个项目
-    std::string item;
+	// 初始化一个空的整数向量，用于存储从字符串中提取的整数
+	std::vector<int> result;
 
-    // 使用getline函数从字符串流中读取数据，以逗号为分隔符
-    while (std::getline(ss, item, ',')) {
-        // 将读取的字符串项目转换为整数，并添加到结果向量中
-        result.push_back(std::stoi(item));
-    }
+	if (str == "" || str.empty()) {
+		// 如果输入字符串为空，则返回空的整数向量
+		return result;
+	}
 
-    // 返回填充了从字符串中提取的整数的向量
-    return result;
+	// 创建一个字符串流对象，以便从输入字符串中读取数据
+	std::stringstream ss(str);
+	// 声明一个临时字符串，用于存储从字符串流中读取的每个项目
+	std::string item;
+
+	// 使用getline函数从字符串流中读取数据，以逗号为分隔符
+	while (std::getline(ss, item, ',')) {
+		// 将读取的字符串项目转换为整数，并添加到结果向量中
+		result.push_back(std::stoi(item));
+	}
+
+	// 返回填充了从字符串中提取的整数的向量
+	return result;
 }
 
 
@@ -945,7 +955,7 @@ int main(int argc, char* argv[])
 		{ wxCMD_LINE_OPTION,
 				  NULL, "output-diff", "output differences to given PDF file",
 				  wxCMD_LINE_VAL_STRING },
-		
+
 		{ wxCMD_LINE_OPTION,
 				  NULL, "pages", "Specify the pages to be compared, separated by commas",
 				  wxCMD_LINE_VAL_STRING },
@@ -1001,7 +1011,7 @@ int main(int argc, char* argv[])
 
 	wxFileName file1(parser.GetParam(0));
 	wxFileName file2(parser.GetParam(1));
-	
+
 	file1.MakeAbsolute();
 	file2.MakeAbsolute();
 	const wxString url1 = wxFileSystem::FileNameToURL(file1);
@@ -1015,7 +1025,7 @@ int main(int argc, char* argv[])
 	if (parser.Found("pages", &pages)) {
 		pages_array = stringToArray(pages.ToStdString());
 	}
-	
+
 	GError* err = NULL;
 
 	PopplerDocument* doc1 = poppler_document_new_from_file(url1.utf8_str(), NULL, &err);
@@ -1074,7 +1084,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		retval = doc_compare(doc1, doc2, NULL, NULL, NULL, NULL,NULL) ? 0 : 1;
+		retval = doc_compare(doc1, doc2, NULL, NULL, NULL, NULL, NULL) ? 0 : 1;
 	}
 
 	g_object_unref(doc1);
