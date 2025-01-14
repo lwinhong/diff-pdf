@@ -66,7 +66,10 @@ inline unsigned char to_grayscale(unsigned char r, unsigned char g, unsigned cha
 {
 	return (unsigned char)(0.2126 * r + 0.7152 * g + 0.0722 * b);
 }
-
+void string_cout2(std::string str) {
+	std::cout << str << std::endl;
+	std::cout.flush(); // 强制刷新输出缓冲区
+}
 cairo_surface_t *render_page(PopplerPage *page)
 {
 	double w, h;
@@ -108,7 +111,9 @@ cairo_surface_t *diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
 							 int offset_x = 0, int offset_y = 0,
 							 wxImage *thumbnail = NULL, int thumbnail_width = -1)
 {
-	assert(s1 || s2);
+	//assert(s1 || s2);
+	if(!s1 || !s2)
+		return NULL;
 
 	long pixel_diff_count = 0;
 	wxRect r1, r2;
@@ -423,6 +428,7 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
 
 	int handledCount = 0;
 	int pagesCount = pages1 > pages2 ? pages1 : pages2;
+
 	for (int page = 0; page < pages_total; page++)
 	{
 		// 判断pages是否为空，而且是否包括page，如果不包括page，则跳过该页
@@ -433,8 +439,9 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
 		// 		continue;
 		// }
 		// printf("progress:page-%d,total-%d,\n", page + 1, pages_total);
-		std::cout << "Progress: " << page + 1 << "," << pages_total << std::endl;
-		std::cout.flush(); // 强制刷新输出缓冲区
+
+		//std::cout << "Progress: " << page + 1 << "," << pages_total << "," << std::endl;
+		//std::cout.flush(); // 强制刷新输出缓冲区
 		if (progress)
 		{
 			progress->Update(
@@ -515,6 +522,11 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
 			if (!g_verbose && !pdf_output && !differences && !gutter)
 				break;
 		}
+
+		std::ostringstream oss;
+		oss << "Progress:" << page + 1 << "," << pages_total << "," << page_same;
+
+		string_cout2(oss.str());
 	}
 
 	if (pdf_output)
@@ -556,10 +568,17 @@ bool doc_compare_single(PopplerDocument *doc1, PopplerDocument *doc2,
 		std::cout << "Progress:" << page + 1 << "," << pages_total << std::endl;
 		std::cout.flush(); // 强制刷新输出缓冲区
 
-		if (pdf_output && page != 0)
+		if (pdf_output)
 		{
 			double w, h;
-			poppler_page_get_size(poppler_document_get_page(doc1, page), &w, &h);
+			poppler_page_get_size(poppler_document_get_page(doc1, key), &w, &h);
+
+			double w2, h2;
+			poppler_page_get_size(poppler_document_get_page(doc2, value), &w2, &h2);
+			if (w2 > w)
+				w = w2;
+			if (h2 > h)
+				h = h2;
 			cairo_pdf_surface_set_size(surface_out, w, h);
 		}
 
@@ -922,6 +941,7 @@ private:
 };
 
 IMPLEMENT_APP_NO_MAIN(DiffPdfApp);
+
 
 /**
  * 将字符串转换为整数数组
