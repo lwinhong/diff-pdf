@@ -134,6 +134,18 @@ cairo_surface_t* diff_images(int page, cairo_surface_t* s1, cairo_surface_t* s2,
 	cairo_surface_t* diff =
 		cairo_image_surface_create(CAIRO_FORMAT_RGB24, rdiff.width, rdiff.height);
 
+	float thumbnail_scale;
+	int thumbnail_height;
+
+	if (thumbnail)
+	{
+		thumbnail_scale = float(thumbnail_width) / float(rdiff.width);
+		thumbnail_height = int(rdiff.height * thumbnail_scale);
+		thumbnail->Create(thumbnail_width, thumbnail_height);
+		// initalize the thumbnail with a white rectangle:
+		thumbnail->SetRGB(wxRect(), 255, 255, 255);
+	}
+
 	// clear the surface to white background if the merged images don't fully
 	// overlap:
 	if (r1 != r2)
@@ -236,6 +248,22 @@ cairo_surface_t* diff_images(int page, cairo_surface_t* s1, cairo_surface_t* s2,
 					pixel_diff_count++;
 					changes = true;
 					linediff = true;
+
+					if (thumbnail)
+					{
+						// calculate the coordinates in the thumbnail
+						int tx = int((r2.x + x / 4.0) * thumbnail_scale);
+						int ty = int((r2.y + y) * thumbnail_scale);
+
+						// Limit the coordinates to the thumbnail size (may be
+						// off slightly due to rounding errors).
+						// See https://github.com/vslavik/diff-pdf/pull/58
+						tx = std::min(tx, thumbnail_width - 1);
+						ty = std::min(ty, thumbnail_height - 1);
+
+						// mark changes with red
+						thumbnail->SetRGB(tx, ty, 255, 0, 0);
+					}
 				}
 
 				if (g_grayscale)
@@ -265,6 +293,69 @@ cairo_surface_t* diff_images(int page, cairo_surface_t* s1, cairo_surface_t* s2,
 			}
 		}
 	}
+
+	// add background image of the page to the thumbnails
+	if (thumbnail)
+	{
+		// copy the 'diff' surface into wxImage:
+		wxImage bg(rdiff.width, rdiff.height);
+		unsigned char* in = datadiff;
+		unsigned char* out = bg.GetData();
+		for (int y = 0; y < rdiff.height; y++, in += stridediff)
+		{
+			for (int x = 0; x < rdiff.width * 4; x += 4)
+			{
+				// cairo_surface_t uses BGR order, wxImage has RGB
+				*(out++) = *(in + x + 2);
+				*(out++) = *(in + x + 1);
+				*(out++) = *(in + x + 0);
+			}
+		}
+
+		// scale it to thumbnail size:
+		bg.Rescale(thumbnail_width, thumbnail_height, wxIMAGE_QUALITY_HIGH);
+
+		// and merge with the diff markers in *thumbnail, making it much
+		// lighter in the process:
+		in = bg.GetData();
+		out = thumbnail->GetData();
+		for (int i = thumbnail_width * thumbnail_height; i > 0; i--)
+		{
+			if (out[1] == 0) // G=0 ==> not white
+			{
+				// marked with red color, as place with differences -- don't
+				// paint background image here, make the red as visible as
+				// possible
+				out += 3;
+				in += 3;
+			}
+			else
+			{
+				// merge in lighter background image
+				*(out++) = 128 + *(in++) / 2;
+				*(out++) = 128 + *(in++) / 2;
+				*(out++) = 128 + *(in++) / 2;
+			}
+		}
+
+		// If there were no changes, indicate it by using green
+		// (170,230,130) color for the thumbnail in gutter control:
+		if (!changes)
+		{
+			out = thumbnail->GetData();
+			for (int i = thumbnail_width * thumbnail_height;
+				i > 0;
+				i--, out += 3)
+			{
+				out[0] = 170 / 2 + out[0] / 2;
+				out[1] = 230 / 2 + out[1] / 2;
+				out[2] = 130 / 2 + out[2] / 2;
+			}
+		}
+	}
+
+	if (g_verbose)
+		printf("page %d has %ld pixels that differ\n", page, pixel_diff_count);
 
 	// If we specified a tolerance, then return if we have exceeded that for this page
 	if (g_per_page_pixel_tolerance == 0 ? changes : pixel_diff_count > g_per_page_pixel_tolerance)
@@ -370,6 +461,20 @@ bool doc_compare(PopplerDocument* doc1, PopplerDocument* doc2,
 
 	for (int page = 0; page < pages_total; page++)
 	{
+		if (progress)
+		{
+			progress->Update
+			(
+				page,
+				wxString::Format
+				(
+					"Comparing page %d of %d...",
+					page + 1,
+					pages_total
+				)
+			);
+		}
+
 		if (pdf_output && page != 0)
 		{
 			double w, h;
@@ -388,6 +493,36 @@ bool doc_compare(PopplerDocument* doc1, PopplerDocument* doc2,
 
 		if (gutter)
 		{
+			wxImage thumbnail;
+			page_same = page_compare(page, cr_out, page1, page2,
+				&thumbnail, Gutter::WIDTH);
+
+			wxString label1("(null)");
+			wxString label2("(null)");
+
+			if (page1)
+			{
+				gchar* label;
+				g_object_get(page1, "label", &label, NULL);
+				label1 = wxString::FromUTF8(label);
+				g_free(label);
+			}
+			if (page2)
+			{
+				gchar* label;
+				g_object_get(page2, "label", &label, NULL);
+				label2 = wxString::FromUTF8(label);
+				g_free(label);
+			}
+
+
+			wxString label;
+			if (label1 == label2)
+				label = label1;
+			else
+				label = label1 + " / " + label2;
+
+			gutter->AddPage(label, thumbnail);
 		}
 		else
 		{
