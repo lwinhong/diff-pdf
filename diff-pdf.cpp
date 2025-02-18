@@ -397,7 +397,7 @@ bool doc_compare(PopplerDocument* doc1, PopplerDocument* doc2,
 		if (differences)
 			differences->push_back(!page_same);
 
-		std::cout << "Progress: " << page + 1 << "," << pages_total << "," << pages_total << std::endl;
+		std::cout << "Progress:" << page + 1 << "," << pages_total << "," << (page_same ? "1" : "0") << std::endl;
 		std::cout.flush(); // 强制刷新输出缓冲区
 
 		if (!page_same)
