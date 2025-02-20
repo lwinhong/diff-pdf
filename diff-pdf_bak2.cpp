@@ -919,7 +919,7 @@ IMPLEMENT_APP_NO_MAIN(DiffPdfApp);
 // ------------------------------------------------------------------------
 // main()
 // ------------------------------------------------------------------------
-
+/*
 int main(int argc, char* argv[])
 {
 	wxAppConsole::CheckBuildOptions(WX_BUILD_OPTIONS_SIGNATURE, "diff-pdf");
@@ -1072,4 +1072,4 @@ int main(int argc, char* argv[])
 	fflush(stderr);
 
 	return retval;
-}
+}*/

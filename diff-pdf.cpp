@@ -364,8 +364,8 @@ bool doc_compare(PopplerDocument* doc1, PopplerDocument* doc2,
 
 	if (pages1 != pages2)
 	{
-		if (g_verbose)
-			printf("pages count differs: %d vs %d\n", pages1, pages2);
+		/*if (g_verbose)
+			printf("pages count differs: %d vs %d\n", pages1, pages2);*/
 	}
 
 	for (int page = 0; page < pages_total; page++)
@@ -404,8 +404,8 @@ bool doc_compare(PopplerDocument* doc1, PopplerDocument* doc2,
 		{
 			pages_differ++;
 
-			if (g_verbose)
-				printf("page %d differs\n", page);
+			/*if (g_verbose)
+				printf("page %d differs\n", page);*/
 
 			// If we don't need to output all different pages in any
 			// form (including verbose report of differing pages!), then
@@ -422,8 +422,8 @@ bool doc_compare(PopplerDocument* doc1, PopplerDocument* doc2,
 		cairo_surface_destroy(surface_out);
 	}
 
-	if (g_verbose)
-		printf("%d of %d pages differ.\n", pages_differ, pages_total);
+	/*if (g_verbose)
+		printf("%d of %d pages differ.\n", pages_differ, pages_total);*/
 
 	// are doc1 and doc1 the same?
 	return (pages_differ == 0) && (pages1 == pages2);

@@ -787,156 +787,156 @@ IMPLEMENT_APP_NO_MAIN(DiffPdfApp);
 // main()
 // ------------------------------------------------------------------------
 
-int main(int argc, char* argv[])
-{
-	wxAppConsole::CheckBuildOptions(WX_BUILD_OPTIONS_SIGNATURE, "diff-pdf");
-	wxInitializer wxinitializer(argc, argv);
-
-	static const wxCmdLineEntryDesc cmd_line_desc[] =
-	{
-		{ wxCMD_LINE_SWITCH,
-				  "h", "help", "show this help message",
-				  wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
-
-		{ wxCMD_LINE_SWITCH,
-				  "v", "verbose", "be verbose" },
-
-		{ wxCMD_LINE_SWITCH,
-				  "s", "skip-identical", "only output pages with differences" },
-
-		{ wxCMD_LINE_SWITCH,
-				  "m", "mark-differences", "additionally mark differences on left side" },
-
-		{ wxCMD_LINE_SWITCH,
-				  "g", "grayscale", "only differences will be in color, unchanged parts will show as gray" },
-
-		{ wxCMD_LINE_OPTION,
-				  NULL, "output-diff", "output differences to given PDF file",
-				  wxCMD_LINE_VAL_STRING },
-
-		{ wxCMD_LINE_OPTION,
-				  NULL, "channel-tolerance", "consider channel values to be equal if within specified tolerance",
-				  wxCMD_LINE_VAL_NUMBER },
-
-		{ wxCMD_LINE_OPTION,
-				  NULL, "per-page-pixel-tolerance", "total number of pixels allowed to be different per page before specifying the page is different",
-				  wxCMD_LINE_VAL_NUMBER },
-
-		{ wxCMD_LINE_OPTION,
-				  NULL, "dpi", "rasterization resolution (default: " wxSTRINGIZE(DEFAULT_RESOLUTION) " dpi)",
-				  wxCMD_LINE_VAL_NUMBER },
-
-		{ wxCMD_LINE_SWITCH,
-				  NULL, "view", "view the differences in a window" },
-
-		{ wxCMD_LINE_PARAM,
-				  NULL, NULL, "file1.pdf", wxCMD_LINE_VAL_STRING },
-		{ wxCMD_LINE_PARAM,
-				  NULL, NULL, "file2.pdf", wxCMD_LINE_VAL_STRING },
-
-		{ wxCMD_LINE_NONE }
-	};
-
-	wxCmdLineParser parser(cmd_line_desc, argc, argv);
-
-	switch (parser.Parse())
-	{
-	case -1: // --help
-		return 0;
-
-	case 0: // everything is ok; proceed
-		break;
-
-	default: // syntax error
-		return 2;
-	}
-
-	if (parser.Found("verbose"))
-		g_verbose = true;
-
-	if (parser.Found("skip-identical"))
-		g_skip_identical = true;
-
-	if (parser.Found("mark-differences"))
-		g_mark_differences = true;
-
-	if (parser.Found("grayscale"))
-		g_grayscale = true;
-
-	wxFileName file1(parser.GetParam(0));
-	wxFileName file2(parser.GetParam(1));
-	file1.MakeAbsolute();
-	file2.MakeAbsolute();
-	const wxString url1 = wxFileSystem::FileNameToURL(file1);
-	const wxString url2 = wxFileSystem::FileNameToURL(file2);
-
-	GError* err = NULL;
-
-	PopplerDocument* doc1 = poppler_document_new_from_file(url1.utf8_str(), NULL, &err);
-	if (!doc1)
-	{
-		fprintf(stderr, "Error opening %s: %s\n", (const char*)parser.GetParam(0).c_str(), err->message);
-		g_error_free(err);
-		return 3;
-	}
-
-	PopplerDocument* doc2 = poppler_document_new_from_file(url2.utf8_str(), NULL, &err);
-	if (!doc2)
-	{
-		fprintf(stderr, "Error opening %s: %s\n", (const char*)parser.GetParam(1).c_str(), err->message);
-		g_error_free(err);
-		return 3;
-	}
-
-	if (parser.Found("per-page-pixel-tolerance", &g_per_page_pixel_tolerance))
-	{
-		if (g_per_page_pixel_tolerance < 0) {
-			fprintf(stderr, "Invalid per-page-pixel-tolerance: %ld. Must be 0 or more\n", g_per_page_pixel_tolerance);
-			return 2;
-		}
-	}
-
-	if (parser.Found("channel-tolerance", &g_channel_tolerance))
-	{
-		if (g_channel_tolerance < 0 || g_channel_tolerance > 255) {
-			fprintf(stderr, "Invalid channel-tolerance: %ld. Valid range is 0(default, exact matching)-255\n", g_channel_tolerance);
-			return 2;
-		}
-	}
-
-	if (parser.Found("dpi", &g_resolution))
-	{
-		if (g_resolution < 1 || g_resolution > 2400) {
-			fprintf(stderr, "Invalid dpi: %ld. Valid range is 1-2400 (default: %d)\n", g_resolution, DEFAULT_RESOLUTION);
-			return 2;
-		}
-	}
-
-
-	int retval = 0;
-
-	wxString pdf_file;
-	if (parser.Found("output-diff", &pdf_file))
-	{
-		retval = doc_compare(doc1, doc2, pdf_file.utf8_str(), NULL) ? 0 : 1;
-	}
-	else if (parser.Found("view"))
-	{
-		wxGetApp().SetData(parser.GetParam(0), doc1,
-			parser.GetParam(1), doc2);
-		retval = wxEntry(argc, argv);
-	}
-	else
-	{
-		retval = doc_compare(doc1, doc2, NULL, NULL) ? 0 : 1;
-	}
-
-	g_object_unref(doc1);
-	g_object_unref(doc2);
-
-	// MinGW doesn't reliably flush streams on exit, so flush them explicitly:
-	fflush(stdout);
-	fflush(stderr);
-
-	return retval;
-}
+//int main(int argc, char* argv[])
+//{
+//	wxAppConsole::CheckBuildOptions(WX_BUILD_OPTIONS_SIGNATURE, "diff-pdf");
+//	wxInitializer wxinitializer(argc, argv);
+//
+//	static const wxCmdLineEntryDesc cmd_line_desc[] =
+//	{
+//		{ wxCMD_LINE_SWITCH,
+//				  "h", "help", "show this help message",
+//				  wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
+//
+//		{ wxCMD_LINE_SWITCH,
+//				  "v", "verbose", "be verbose" },
+//
+//		{ wxCMD_LINE_SWITCH,
+//				  "s", "skip-identical", "only output pages with differences" },
+//
+//		{ wxCMD_LINE_SWITCH,
+//				  "m", "mark-differences", "additionally mark differences on left side" },
+//
+//		{ wxCMD_LINE_SWITCH,
+//				  "g", "grayscale", "only differences will be in color, unchanged parts will show as gray" },
+//
+//		{ wxCMD_LINE_OPTION,
+//				  NULL, "output-diff", "output differences to given PDF file",
+//				  wxCMD_LINE_VAL_STRING },
+//
+//		{ wxCMD_LINE_OPTION,
+//				  NULL, "channel-tolerance", "consider channel values to be equal if within specified tolerance",
+//				  wxCMD_LINE_VAL_NUMBER },
+//
+//		{ wxCMD_LINE_OPTION,
+//				  NULL, "per-page-pixel-tolerance", "total number of pixels allowed to be different per page before specifying the page is different",
+//				  wxCMD_LINE_VAL_NUMBER },
+//
+//		{ wxCMD_LINE_OPTION,
+//				  NULL, "dpi", "rasterization resolution (default: " wxSTRINGIZE(DEFAULT_RESOLUTION) " dpi)",
+//				  wxCMD_LINE_VAL_NUMBER },
+//
+//		{ wxCMD_LINE_SWITCH,
+//				  NULL, "view", "view the differences in a window" },
+//
+//		{ wxCMD_LINE_PARAM,
+//				  NULL, NULL, "file1.pdf", wxCMD_LINE_VAL_STRING },
+//		{ wxCMD_LINE_PARAM,
+//				  NULL, NULL, "file2.pdf", wxCMD_LINE_VAL_STRING },
+//
+//		{ wxCMD_LINE_NONE }
+//	};
+//
+//	wxCmdLineParser parser(cmd_line_desc, argc, argv);
+//
+//	switch (parser.Parse())
+//	{
+//	case -1: // --help
+//		return 0;
+//
+//	case 0: // everything is ok; proceed
+//		break;
+//
+//	default: // syntax error
+//		return 2;
+//	}
+//
+//	if (parser.Found("verbose"))
+//		g_verbose = true;
+//
+//	if (parser.Found("skip-identical"))
+//		g_skip_identical = true;
+//
+//	if (parser.Found("mark-differences"))
+//		g_mark_differences = true;
+//
+//	if (parser.Found("grayscale"))
+//		g_grayscale = true;
+//
+//	wxFileName file1(parser.GetParam(0));
+//	wxFileName file2(parser.GetParam(1));
+//	file1.MakeAbsolute();
+//	file2.MakeAbsolute();
+//	const wxString url1 = wxFileSystem::FileNameToURL(file1);
+//	const wxString url2 = wxFileSystem::FileNameToURL(file2);
+//
+//	GError* err = NULL;
+//
+//	PopplerDocument* doc1 = poppler_document_new_from_file(url1.utf8_str(), NULL, &err);
+//	if (!doc1)
+//	{
+//		fprintf(stderr, "Error opening %s: %s\n", (const char*)parser.GetParam(0).c_str(), err->message);
+//		g_error_free(err);
+//		return 3;
+//	}
+//
+//	PopplerDocument* doc2 = poppler_document_new_from_file(url2.utf8_str(), NULL, &err);
+//	if (!doc2)
+//	{
+//		fprintf(stderr, "Error opening %s: %s\n", (const char*)parser.GetParam(1).c_str(), err->message);
+//		g_error_free(err);
+//		return 3;
+//	}
+//
+//	if (parser.Found("per-page-pixel-tolerance", &g_per_page_pixel_tolerance))
+//	{
+//		if (g_per_page_pixel_tolerance < 0) {
+//			fprintf(stderr, "Invalid per-page-pixel-tolerance: %ld. Must be 0 or more\n", g_per_page_pixel_tolerance);
+//			return 2;
+//		}
+//	}
+//
+//	if (parser.Found("channel-tolerance", &g_channel_tolerance))
+//	{
+//		if (g_channel_tolerance < 0 || g_channel_tolerance > 255) {
+//			fprintf(stderr, "Invalid channel-tolerance: %ld. Valid range is 0(default, exact matching)-255\n", g_channel_tolerance);
+//			return 2;
+//		}
+//	}
+//
+//	if (parser.Found("dpi", &g_resolution))
+//	{
+//		if (g_resolution < 1 || g_resolution > 2400) {
+//			fprintf(stderr, "Invalid dpi: %ld. Valid range is 1-2400 (default: %d)\n", g_resolution, DEFAULT_RESOLUTION);
+//			return 2;
+//		}
+//	}
+//
+//
+//	int retval = 0;
+//
+//	wxString pdf_file;
+//	if (parser.Found("output-diff", &pdf_file))
+//	{
+//		retval = doc_compare(doc1, doc2, pdf_file.utf8_str(), NULL) ? 0 : 1;
+//	}
+//	else if (parser.Found("view"))
+//	{
+//		wxGetApp().SetData(parser.GetParam(0), doc1,
+//			parser.GetParam(1), doc2);
+//		retval = wxEntry(argc, argv);
+//	}
+//	else
+//	{
+//		retval = doc_compare(doc1, doc2, NULL, NULL) ? 0 : 1;
+//	}
+//
+//	g_object_unref(doc1);
+//	g_object_unref(doc2);
+//
+//	// MinGW doesn't reliably flush streams on exit, so flush them explicitly:
+//	fflush(stdout);
+//	fflush(stderr);
+//
+//	return retval;
+//}
